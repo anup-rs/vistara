@@ -1,0 +1,275 @@
+/* Vistara Photography App - Additional Styles */
+/* These complement the Tailwind utilities */
+
+/* Safe area support for mobile devices */
+.h-safe-top {
+    height: env(safe-area-inset-top);
+}
+
+.safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Smooth theme transitions */
+* {
+    transition-property: background-color, border-color;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+}
+
+/* Custom selection color */
+::selection {
+    background-color: rgba(14, 165, 233, 0.3);
+}
+
+/* Photo grid masonry effect enhancement */
+.photo-item {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0); /* Hardware acceleration */
+}
+
+.photo-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.photo-item:hover::after {
+    opacity: 1;
+}
+
+/* AI Score Badge Animation */
+@keyframes scorePop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.score-badge {
+    animation: scorePop 0.5s ease-out;
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+.dark .skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Touch feedback */
+.touch-feedback {
+    position: relative;
+    overflow: hidden;
+}
+
+.touch-feedback::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+    opacity: 0;
+    transform: scale(0);
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.touch-feedback:active::before {
+    opacity: 1;
+    transform: scale(2);
+}
+
+/* Custom range slider for settings */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+    background: #e2e8f0;
+    height: 6px;
+    border-radius: 3px;
+}
+
+.dark input[type="range"]::-webkit-slider-track {
+    background: #334155;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #0ea5e9;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    margin-top: -6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Hide file input but keep accessible */
+input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Prevent text selection during swipe */
+.no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Image loading placeholder */
+.img-placeholder {
+    background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+    background-size: 200% 100%;
+    animation: shine 1.5s linear infinite;
+}
+
+@keyframes shine {
+    to {
+        background-position-x: -200%;
+    }
+}
+
+/* Dark mode specific adjustments */
+.dark .glass {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Collection card hover effects */
+.collection-card {
+    transition: all 0.3s ease;
+}
+
+.collection-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.dark .collection-card:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+/* XP Progress bar glow */
+.xp-glow {
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+}
+
+/* Rank badge shine effect */
+.rank-badge {
+    position: relative;
+    overflow: hidden;
+}
+
+.rank-badge::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255,255,255,0.3) 50%,
+        transparent 100%
+    );
+    transform: rotate(30deg) translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.rank-badge:hover::after {
+    transform: rotate(30deg) translateX(100%);
+}
+
+/* Bottom nav active indicator */
+.nav-btn {
+    position: relative;
+}
+
+.nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+}
+
+/* Responsive adjustments for larger phones */
+@media (min-width: 390px) {
+    .photo-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.25rem;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) {
+    #app {
+        max-width: 100%;
+    }
+    
+    .photo-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+    overscroll-behavior-y: none;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Focus visible for accessibility */
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid #0ea5e9;
+    outline-offset: 2px;
+}
+
+/* AI Analysis pulse animation */
+.ai-pulse {
+    animation: aiPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes aiPulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 0 10px rgba(14, 165, 233, 0);
+    }
+}

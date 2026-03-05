@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f0f">
+    <title>Vistara - AI Photography Gallery</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        dark: {
+                            bg: '#0a0a0a',
+                            surface: '#1a1a1a',
+                            elevated: '#2a2a2a',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        
+        /* Hide scrollbar for mobile gallery but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Photo Grid Animation */
+        .photo-item {
+            animation: fadeIn 0.5s ease-out;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .photo-item:active {
+            transform: scale(0.95);
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass {
+            background: rgba(26, 26, 26, 0.8);
+        }
+        
+        /* AI Score Ring */
+        .score-ring {
+            background: conic-gradient(from 0deg, #0ea5e9 var(--score), transparent var(--score));
+        }
+        
+        /* Touch Actions */
+        .touch-pan {
+            touch-action: pan-y;
+        }
+        
+        /* Loading Shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
+    
+    <!-- App Container -->
+    <div id="app" class="min-h-screen flex flex-col max-w-md mx-auto bg-white dark:bg-dark-bg shadow-2xl relative">
+        
+        <!-- Status Bar Spacer -->
+        <div class="h-safe-top bg-white dark:bg-dark-bg z-50"></div>
+        
+        <!-- Header -->
+        <header id="main-header" class="sticky top-0 z-40 glass border-b border-gray-200 dark:border-gray-800 transition-all duration-300">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="aperture" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <h1 class="font-serif text-xl font-bold tracking-tight">Vistara</h1>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-elevated transition-colors">
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                    <button onclick="app.navigate('rank')" class="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-elevated transition-colors">
+                        <i data-lucide="trophy" class="w-5 h-5"></i>
+                        <span id="rank-badge" class="absolute top-1 right-1 w-2 h-2 bg-primary-500 rounded-full"></span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="px-4 pb-3">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    <input type="text" placeholder="Search photos..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-dark-surface rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all">
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar pb-20">
+            
+            <!-- Home / Gallery View -->
+            <div id="view-home" class="view-section">
+                <!-- AI Collections Horizontal Scroll -->
+                <div class="px-4 py-4">
+                    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">AI Collections</h2>
+                    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2" id="collections-container">
+                        <!-- Collections injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Gallery Grid -->
+                <div class="px-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Gallery</h2>
+                        <select id="grouping-select" onchange="app.changeGrouping(this.value)" 
+                                class="text-xs bg-transparent border-none text-primary-600 dark:text-primary-400 focus:outline-none cursor-pointer">
+                            <option value="day">Day Wise</option>
+                            <option value="week">Week Wise</option>
+                            <option value="month">Month Wise</option>
+                        </select>
+                    </div>
+                    
+                    <div id="gallery-container" class="space-y-6">
+                        <!-- Gallery groups injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload View -->
+            <div id="view-upload" class="view-section hidden px-4 py-6">
+                <h2 class="text-2xl font-serif font-bold mb-6">Upload Photos</h2>
+                
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 text-center mb-6 transition-colors hover:border-primary-500 dark:hover:border-primary-400" 
+                     onclick="document.getElementById('file-input').click()">
+                    <div class="w-16 h-16 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="upload-cloud" class="w-8 h-8 text-primary-500"></i>
+                    </div>
+                    <p class="text-lg font-medium mb-2">Tap to upload photos</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">1-50 photos per batch</p>
+                    <input type="file" id="file-input" multiple accept="image/*" class="hidden" onchange="app.handleFileSelect(this)">
+                </div>
+
+                <div id="upload-preview" class="grid grid-cols-3 gap-2 mb-6 hidden">
+                    <!-- Preview thumbnails -->
+                </div>
+
+                <button id="upload-btn" onclick="app.processUpload()" 
+                        class="w-full py-3 bg-primary-600 text-white rounded-xl font-medium opacity-50 cursor-not-allowed" disabled>
+                    Analyze & Upload
+                </button>
+            </div>
+
+            <!-- Collections View -->
+            <div id="view-collections" class="view-section hidden px-4 py-6">
+                <h2 class="text-2xl font-serif font-bold mb-6">Collections</h2>
+                <div id="collections-grid" class="grid grid-cols-2 gap-4">
+                    <!-- Collection cards -->
+                </div>
+            </div>
+
+            <!-- Rank Dashboard -->
+            <div id="view-rank" class="view-section hidden">
+                <div class="px-4 py-6">
+                    <!-- Rank Card -->
+                    <div class="bg-gradient-to-br from-primary-600 to-purple-700 rounded-3xl p-6 text-white mb-6 shadow-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-primary-100 text-sm font-medium">Current Rank</span>
+                            <i data-lucide="award" class="w-6 h-6 text-primary-200"></i>
+                        </div>
+                        <h2 id="current-rank-title" class="text-3xl font-serif font-bold mb-2">Frame Seeker</h2>
+                        <p id="next-rank-info" class="text-primary-100 text-sm mb-4">500 XP to next rank</p>
+                        
+                        <!-- XP Progress -->
+                        <div class="bg-white/20 rounded-full h-3 mb-2 overflow-hidden">
+                            <div id="xp-progress" class="bg-white h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-primary-100">
+                            <span id="current-xp">0 XP</span>
+                            <span id="target-xp">100 XP</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4 text-center">
+                            <p id="total-photos" class="text-2xl font-bold text-primary-600 dark:text-primary-400">0</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Photos</p>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4 text-center">
+                            <p id="avg-score" class="text-2xl font-bold text-primary-600 dark:text-primary-400">0</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg Score</p>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4 text-center">
+                            <p id="best-photo-count" class="text-2xl font-bold text-primary-600 dark:text-primary-400">0</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Best Shots</p>
+                        </div>
+                    </div>
+
+                    <!-- Rank List -->
+                    <h3 class="text-lg font-bold mb-4">Photography Ranks</h3>
+                    <div id="ranks-list" class="space-y-3">
+                        <!-- Rank items injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" class="view-section hidden px-4 py-6">
+                <h2 class="text-2xl font-serif font-bold mb-6">Settings</h2>
+                
+                <div class="space-y-6">
+                    <!-- Theme Setting -->
+                    <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                                    <i data-lucide="palette" class="w-5 h-5 text-primary-600 dark:text-primary-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Appearance</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Light or Dark theme</p>
+                                </div>
+                            </div>
+                            <select id="theme-select" onchange="app.setTheme(this.value)" class="bg-white dark:bg-dark-elevated border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1 text-sm">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="system">System</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Grouping Setting -->
+                    <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                                    <i data-lucide="calendar" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Photo Grouping</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">How photos are organized</p>
+                                </div>
+                            </div>
+                            <select id="settings-grouping" onchange="app.changeGrouping(this.value)" class="bg-white dark:bg-dark-elevated border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1 text-sm">
+                                <option value="day">By Day</option>
+                                <option value="week">By Week</option>
+                                <option value="month">By Month</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- AI Toggle -->
+                    <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                    <i data-lucide="brain" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">AI Analysis</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Auto-categorize & score</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="ai-toggle" class="sr-only peer" checked onchange="app.toggleAI(this.checked)">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Storage -->
+                    <div class="bg-gray-100 dark:bg-dark-surface rounded-2xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                                    <i data-lucide="hard-drive" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Storage</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Manage local data</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="app.clearStorage()" class="w-full mt-2 py-2 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                            Clear All Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Photo Viewer Modal -->
+        <div id="photo-viewer" class="fixed inset-0 z-50 bg-black hidden flex-col">
+            <div class="flex items-center justify-between p-4 text-white z-10">
+                <button onclick="app.closeViewer()" class="p-2 rounded-full bg-white/10 backdrop-blur-md">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+                <div class="flex gap-3">
+                    <button onclick="app.deleteCurrentPhoto()" class="p-2 rounded-full bg-white/10 backdrop-blur-md">
+                        <i data-lucide="trash-2" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="app.showAIInfo()" class="p-2 rounded-full bg-primary-600/80 backdrop-blur-md">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-1 relative overflow-hidden touch-pan" id="viewer-container">
+                <img id="viewer-image" src="" alt="" class="absolute inset-0 w-full h-full object-contain transition-transform duration-300">
+                
+                <!-- AI Info Overlay -->
+                <div id="ai-overlay" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 text-white transform translate-y-full transition-transform duration-300">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span id="viewer-score" class="text-3xl font-bold text-primary-400">85</span>
+                                <span class="text-sm text-gray-300">/100</span>
+                            </div>
+                            <p id="viewer-category" class="text-sm text-primary-300 font-medium">Portrait</p>
+                        </div>
+                        <div id="viewer-rank-badge" class="px-3 py-1 bg-primary-600 rounded-full text-xs font-bold">
+                            Excellent
+                        </div>
+                    </div>
+                    <p id="viewer-feedback" class="text-sm text-gray-200 leading-relaxed mb-3">
+                        Great composition using the rule of thirds. The lighting is well balanced.
+                    </p>
+                    <div class="flex gap-2 text-xs text-gray-400">
+                        <span id="viewer-date" class="flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3 h-3"></i>
+                            Oct 24, 2024
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Hints -->
+            <div class="absolute top-1/2 left-4 transform -translate-y-1/2 pointer-events-none opacity-0 transition-opacity" id="prev-hint">
+                <i data-lucide="chevron-left" class="w-8 h-8 text-white/50"></i>
+            </div>
+            <div class="absolute top-1/2 right-4 transform -translate-y-1/2 pointer-events-none opacity-0 transition-opacity" id="next-hint">
+                <i data-lucide="chevron-right" class="w-8 h-8 text-white/50"></i>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-surface border-t border-gray-200 dark:border-gray-800 z-40 safe-area-pb max-w-md mx-auto">
+            <div class="flex items-center justify-around py-2">
+                <button onclick="app.navigate('home')" class="nav-btn active flex flex-col items-center gap-1 p-2 text-primary-600 dark:text-primary-400" data-view="home">
+                    <i data-lucide="images" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Gallery</span>
+                </button>
+                <button onclick="app.navigate('collections')" class="nav-btn flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-view="collections">
+                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Collections</span>
+                </button>
+                
+                <!-- Upload FAB -->
+                <button onclick="app.navigate('upload')" class="relative -top-5 bg-primary-600 text-white rounded-full p-4 shadow-lg shadow-primary-600/30 hover:scale-105 transition-transform">
+                    <i data-lucide="plus" class="w-6 h-6"></i>
+                </button>
+                
+                <button onclick="app.navigate('rank')" class="nav-btn flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-view="rank">
+                    <i data-lucide="trophy" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Rank</span>
+                </button>
+                <button onclick="app.navigate('settings')" class="nav-btn flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-view="settings">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-medium">Settings</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-full shadow-xl z-50 opacity-0 pointer-events-none transition-opacity duration-300 text-sm font-medium">
+            Notification
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex-col items-center justify-center">
+            <div class="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-white font-medium">AI Analyzing Photos...</p>
+            <p id="loading-status" class="text-gray-400 text-sm mt-2">Detecting composition...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+<script src="https://deepsite.hf.co/deepsite-badge.js"></script>
+</body>
+</html>
