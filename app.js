@@ -1,8 +1,3 @@
-/**
- * Vistara Photography App
- * Main Application Logic
- * Handles photo management, AI simulation, ranking system, and UI interactions
- */
 
 // Application State
 const state = {
